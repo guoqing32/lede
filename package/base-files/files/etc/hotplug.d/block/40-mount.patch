@@ -1,0 +1,34 @@
+#!/bin/sh
+
+case "$ACTION" in 
+    add)
+        /etc/init.d/samba start
+        for i in $(ls /dev/ | grep 'sd[a-z][1-9]')
+            do
+                mkdir -p /mnt/usbstorage
+                isntfs=`fdisk -l | grep $i | grep NTFS`
+                if ["$isntfs" = ""];then
+                    mount  -o iocharset=utf8,rw /dev/$i /mnt/usbstorage
+                    if [ "$?" -ne 0 ];then
+                        mount -o rw /dev/$i /mnt/usbstorage
+                    fi
+                else
+                    ntfs-3g  -o iocharset=utf8,rw /dev/$i /mnt/usbstorage
+                    if [ "$?" -ne 0 ];then
+                        ntfs-3g -o rw /dev/$i /mnt/usbstorage
+                    fi
+                fi
+
+            done 
+        ;;
+    remove) 
+        /etc/init.d/samba stop
+        MOUNT=`mount | grep -o '/mnt/usbstorage'`
+
+        for i in $MOUNT
+
+            do
+                umount /mnt/usbstorage
+            done 
+        ;;
+esac
